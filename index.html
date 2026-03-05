@@ -3,40 +3,408 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Valor UF 2026</title>
+    <title>Valor UF Chile — Consulta y Calculadora</title>
+    <meta name="description" content="Consulta el valor diario de la UF en Chile para 2025 y 2026. Calculadora de conversión UF a pesos chilenos en tiempo real.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f4f9; margin: 0; }
-        .card { background: white; padding: 2.5rem; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; }
-        .date { font-size: 1.2rem; color: #666; margin-bottom: 1rem; }
-        .uf { font-size: 3rem; font-weight: bold; color: #0056b3; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f0c29 0%, #1a1a3e 40%, #24243e 100%);
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #64b5f6, #42a5f5, #1e88e5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.3rem;
+        }
+
+        .subtitle {
+            font-size: 0.95rem;
+            color: #8888aa;
+            margin-bottom: 2rem;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 1.8rem;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(66, 165, 245, 0.08);
+        }
+
+        .card-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #64b5f6;
+            margin-bottom: 1rem;
+        }
+
+        .uf-value {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.1;
+            transition: opacity 0.3s ease;
+        }
+
+        .uf-value.loading { opacity: 0.4; }
+
+        .uf-date {
+            font-size: 0.95rem;
+            color: #8888aa;
+            margin-top: 0.5rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.6rem;
+        }
+
+        .status-badge.ok {
+            background: rgba(76, 175, 80, 0.15);
+            color: #81c784;
+            border: 1px solid rgba(76, 175, 80, 0.25);
+        }
+
+        .status-badge.warn {
+            background: rgba(255, 167, 38, 0.15);
+            color: #ffb74d;
+            border: 1px solid rgba(255, 167, 38, 0.25);
+        }
+
+        .status-badge.error {
+            background: rgba(244, 67, 54, 0.15);
+            color: #e57373;
+            border: 1px solid rgba(244, 67, 54, 0.25);
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #aaa;
+            margin-bottom: 0.4rem;
+        }
+
+        input[type="date"],
+        input[type="number"] {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 10px;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        input[type="date"]:focus,
+        input[type="number"]:focus {
+            border-color: #42a5f5;
+            box-shadow: 0 0 0 3px rgba(66, 165, 245, 0.15);
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.7);
+            cursor: pointer;
+        }
+
+        .query-result {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            display: none;
+        }
+
+        .query-result.visible { display: block; animation: fadeIn 0.3s ease; }
+
+        .query-result-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .query-result-label {
+            font-size: 0.85rem;
+            color: #8888aa;
+            margin-top: 0.25rem;
+        }
+
+        .calc-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .calc-row .input-group { flex: 1; }
+
+        .calc-arrow {
+            font-size: 1.4rem;
+            color: #42a5f5;
+            margin-top: 1.2rem;
+            animation: pulse 2s infinite;
+        }
+
+        .calc-info {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+
+        .footer {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.78rem;
+            color: #555;
+        }
+
+        .footer a {
+            color: #64b5f6;
+            text-decoration: none;
+        }
+
+        .footer a:hover { text-decoration: underline; }
+
+        .api-hint {
+            margin-top: 1rem;
+            padding: 0.8rem 1rem;
+            background: rgba(66, 165, 245, 0.06);
+            border: 1px solid rgba(66, 165, 245, 0.15);
+            border-radius: 10px;
+            font-size: 0.8rem;
+            color: #8888aa;
+        }
+
+        .api-hint code {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.78rem;
+            color: #64b5f6;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        @media (max-width: 520px) {
+            h1 { font-size: 1.7rem; }
+            .uf-value { font-size: 2.2rem; }
+            .card { padding: 1.4rem; }
+            .calc-row { flex-direction: column; gap: 0.3rem; }
+            .calc-arrow { transform: rotate(90deg); margin-top: 0; }
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>Valor de la UF</h1>
-        <div class="date" id="date-display"></div>
-        <div class="uf" id="uf-display">Cargando...</div>
+    <h1>Valor UF Chile</h1>
+    <p class="subtitle">Datos oficiales del SII — 2025 y 2026</p>
+
+    <div class="container">
+        <div class="card" id="today-card">
+            <div class="card-title">Valor de hoy</div>
+            <div class="uf-value loading" id="today-value">Cargando...</div>
+            <div class="uf-date" id="today-date"></div>
+            <span class="status-badge" id="today-badge"></span>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Consultar por fecha</div>
+            <label for="date-picker">Selecciona una fecha (2025 — 2026)</label>
+            <input type="date" id="date-picker" min="2025-01-01" max="2026-12-31">
+            <div class="query-result" id="query-result">
+                <div class="query-result-value" id="query-value"></div>
+                <div class="query-result-label" id="query-label"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Calculadora UF ↔ Pesos</div>
+            <div class="calc-row">
+                <div class="input-group">
+                    <label for="input-uf">UF</label>
+                    <input type="number" id="input-uf" placeholder="Ej: 1" min="0" step="0.01">
+                </div>
+                <span class="calc-arrow">⇄</span>
+                <div class="input-group">
+                    <label for="input-clp">Pesos (CLP)</label>
+                    <input type="number" id="input-clp" placeholder="Ej: 39.000" min="0" step="1">
+                </div>
+            </div>
+            <div class="calc-info" id="calc-info"></div>
+        </div>
+
+        <div class="api-hint">
+            <strong>API:</strong> Consume los datos desde otras apps con<br>
+            <code>GET /uf_data.json</code>
+        </div>
     </div>
+
+    <div class="footer">
+        Fuente: <a href="https://www.sii.cl/valores_y_fechas/uf/uf2026.htm" target="_blank" rel="noopener">SII.cl</a> — Actualización mensual automática
+    </div>
+
     <script>
-        async function loadUF() {
+        let ufData = {};
+        let currentUfNumeric = null;
+
+        function parseUfToNumber(ufStr) {
+            return parseFloat(ufStr.replace(/\./g, '').replace(',', '.'));
+        }
+
+        function formatCLP(num) {
+            return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(num);
+        }
+
+        function formatUF(num) {
+            return num.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+        }
+
+        function formatDateDisplay(dateStr) {
+            const [y, m, d] = dateStr.split('-');
+            return `${d}/${m}/${y}`;
+        }
+
+        async function init() {
             try {
-                const response = await fetch('uf_2026.json');
-                const data = await response.json();
-                
-                const today = new Date();
-                const year = today.getFullYear();
-                const month = String(today.getMonth() + 1).padStart(2, '0');
-                const day = String(today.getDate()).padStart(2, '0');
-                const dateString = `${year}-${month}-${day}`;
-                
-                document.getElementById('date-display').textContent = `${day}/${month}/${year}`;
-                document.getElementById('uf-display').textContent = data[dateString] ? `$${data[dateString]}` : 'No disponible';
-            } catch (error) {
-                document.getElementById('uf-display').textContent = 'Error de carga';
+                const response = await fetch('uf_data.json');
+                ufData = await response.json();
+                showToday();
+            } catch (e) {
+                document.getElementById('today-value').textContent = 'Error de carga';
+                document.getElementById('today-value').classList.remove('loading');
+                document.getElementById('today-badge').textContent = 'Error';
+                document.getElementById('today-badge').className = 'status-badge error';
             }
         }
-        
-        loadUF();
+
+        function showToday() {
+            const today = new Date();
+            const y = today.getFullYear();
+            const m = String(today.getMonth() + 1).padStart(2, '0');
+            const d = String(today.getDate()).padStart(2, '0');
+            const key = `${y}-${m}-${d}`;
+
+            const el = document.getElementById('today-value');
+            const dateEl = document.getElementById('today-date');
+            const badge = document.getElementById('today-badge');
+
+            el.classList.remove('loading');
+
+            if (ufData[key]) {
+                el.textContent = `$${ufData[key]}`;
+                dateEl.textContent = formatDateDisplay(key);
+                badge.textContent = 'Actualizado';
+                badge.className = 'status-badge ok';
+                currentUfNumeric = parseUfToNumber(ufData[key]);
+                document.getElementById('calc-info').textContent = `Usando valor UF del ${formatDateDisplay(key)}: $${ufData[key]}`;
+            } else {
+                el.textContent = 'No disponible';
+                dateEl.textContent = formatDateDisplay(key);
+                badge.textContent = 'Sin datos';
+                badge.className = 'status-badge warn';
+            }
+
+            document.getElementById('date-picker').value = key;
+        }
+
+        document.getElementById('date-picker').addEventListener('change', function () {
+            const key = this.value;
+            const result = document.getElementById('query-result');
+            const valueEl = document.getElementById('query-value');
+            const labelEl = document.getElementById('query-label');
+
+            if (ufData[key]) {
+                valueEl.textContent = `$${ufData[key]}`;
+                labelEl.textContent = `UF para el ${formatDateDisplay(key)}`;
+                result.className = 'query-result visible';
+                currentUfNumeric = parseUfToNumber(ufData[key]);
+                document.getElementById('calc-info').textContent = `Usando valor UF del ${formatDateDisplay(key)}: $${ufData[key]}`;
+                document.getElementById('input-uf').dispatchEvent(new Event('input'));
+            } else {
+                valueEl.textContent = 'No disponible';
+                labelEl.textContent = `No hay datos para el ${formatDateDisplay(key)}`;
+                result.className = 'query-result visible';
+            }
+        });
+
+        let updatingFromUf = false;
+        let updatingFromClp = false;
+
+        document.getElementById('input-uf').addEventListener('input', function () {
+            if (updatingFromClp || !currentUfNumeric) return;
+            updatingFromUf = true;
+            const uf = parseFloat(this.value);
+            const clpInput = document.getElementById('input-clp');
+            if (!isNaN(uf) && uf >= 0) {
+                clpInput.value = Math.round(uf * currentUfNumeric);
+            } else {
+                clpInput.value = '';
+            }
+            updatingFromUf = false;
+        });
+
+        document.getElementById('input-clp').addEventListener('input', function () {
+            if (updatingFromUf || !currentUfNumeric) return;
+            updatingFromClp = true;
+            const clp = parseFloat(this.value);
+            const ufInput = document.getElementById('input-uf');
+            if (!isNaN(clp) && clp >= 0) {
+                ufInput.value = (clp / currentUfNumeric).toFixed(4);
+            } else {
+                ufInput.value = '';
+            }
+            updatingFromClp = false;
+        });
+
+        init();
     </script>
 </body>
 </html>

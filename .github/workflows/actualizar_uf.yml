@@ -29,6 +29,6 @@ jobs:
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add uf_2026.json
+          git add uf_data.json
           git commit -m "Actualiza datos de la UF" || echo "Sin cambios"
           git push
