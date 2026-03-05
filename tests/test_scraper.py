@@ -1,7 +1,8 @@
 import json
 import os
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, call
+from requests.exceptions import HTTPError
 from scraper import scrape_uf, scrape_all_years
 
 
@@ -122,6 +123,47 @@ def test_scrape_uf_http_error(mock_get):
         scrape_uf(2026)
 
 
+@patch("scraper.time.sleep")
+@patch("scraper.requests.get")
+def test_scrape_uf_retries_on_403(mock_get, mock_sleep):
+    mock_403 = MagicMock()
+    mock_403.status_code = 403
+    error_403 = HTTPError(response=mock_403)
+
+    mock_ok = MagicMock()
+    mock_ok.text = SAMPLE_HTML
+    mock_ok.raise_for_status = MagicMock()
+
+    fail_response = MagicMock()
+    fail_response.raise_for_status.side_effect = error_403
+
+    mock_get.side_effect = [fail_response, mock_ok]
+
+    result = scrape_uf(2026)
+
+    assert len(result) == 7
+    assert mock_get.call_count == 2
+    mock_sleep.assert_called_once()
+
+
+@patch("scraper.time.sleep")
+@patch("scraper.requests.get")
+def test_scrape_uf_fails_after_max_retries(mock_get, mock_sleep):
+    mock_503 = MagicMock()
+    mock_503.status_code = 503
+    error_503 = HTTPError(response=mock_503)
+
+    fail_response = MagicMock()
+    fail_response.raise_for_status.side_effect = error_503
+
+    mock_get.return_value = fail_response
+
+    with pytest.raises(HTTPError):
+        scrape_uf(2026)
+
+    assert mock_get.call_count == 3
+
+
 @patch("scraper.requests.get")
 def test_scrape_all_years_combines_data(mock_get):
     mock_response = MagicMock()
@@ -158,7 +200,7 @@ def test_scrape_all_years_creates_valid_json(mock_get):
 
 
 @patch("scraper.requests.get")
-def test_scrape_all_years_calls_both_years(mock_get):
+def test_scrape_all_years_calls_both_urls(mock_get):
     mock_response = MagicMock()
     mock_response.text = SAMPLE_HTML
     mock_response.raise_for_status = MagicMock()

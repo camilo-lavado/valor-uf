@@ -288,12 +288,22 @@
     </div>
 
     <div class="footer">
-        Fuente: <a href="https://www.sii.cl/valores_y_fechas/uf/uf2026.htm" target="_blank" rel="noopener">SII.cl</a> — Actualización mensual automática
+        Fuente: <a href="https://www.sii.cl/valores_y_fechas/uf/uf2026.htm" target="_blank" rel="noopener">SII.cl</a> — Actualización diaria automática
     </div>
 
     <script>
         let ufData = {};
         let currentUfNumeric = null;
+
+        function getChileDate() {
+            const fmt = new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'America/Santiago',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+            return fmt.format(new Date());
+        }
 
         function parseUfToNumber(ufStr) {
             return parseFloat(ufStr.replace(/\./g, '').replace(',', '.'));
@@ -326,11 +336,7 @@
         }
 
         function showToday() {
-            const today = new Date();
-            const y = today.getFullYear();
-            const m = String(today.getMonth() + 1).padStart(2, '0');
-            const d = String(today.getDate()).padStart(2, '0');
-            const key = `${y}-${m}-${d}`;
+            const key = getChileDate();
 
             const el = document.getElementById('today-value');
             const dateEl = document.getElementById('today-date');
