@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valor UF 2026</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f4f9; margin: 0; }
+        .card { background: white; padding: 2.5rem; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; }
+        .date { font-size: 1.2rem; color: #666; margin-bottom: 1rem; }
+        .uf { font-size: 3rem; font-weight: bold; color: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Valor de la UF</h1>
+        <div class="date" id="date-display"></div>
+        <div class="uf" id="uf-display">Cargando...</div>
+    </div>
+    <script>
+        async function loadUF() {
+            try {
+                const response = await fetch('uf_2026.json');
+                const data = await response.json();
+                
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                const dateString = `${year}-${month}-${day}`;
+                
+                document.getElementById('date-display').textContent = `${day}/${month}/${year}`;
+                document.getElementById('uf-display').textContent = data[dateString] ? `$${data[dateString]}` : 'No disponible';
+            } catch (error) {
+                document.getElementById('uf-display').textContent = 'Error de carga';
+            }
+        }
+        
+        loadUF();
+    </script>
+</body>
+</html>
